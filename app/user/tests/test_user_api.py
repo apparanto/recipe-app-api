@@ -8,6 +8,7 @@ from rest_framework import status
 
 CREATE_USER_URL = reverse('user:create')
 TOKEN_URL = reverse('user:token')
+ME_URL = reverse('user:me')
 
 
 def create_user(**params):
@@ -107,3 +108,51 @@ class PublicUserApiTests(TestCase):
         })
         self.assertNotIn('token', res.data)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_unauthorized_user_access(self):
+        '''Test if the access to me requires authentication'''
+        res = self.client.get(ME_URL)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertNotIn('email', res.data)
+
+
+class PrivateUserApiTest(TestCase):
+    '''Test API requests that require authentication'''
+
+    def setUp(self):
+        self.user = create_user(
+            email='test@apparanto.com',
+            password='Pass12345',
+            name='test user'
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_retrieve_profile_success(self):
+        '''Test retrieving profile for logged in user'''
+        res = self.client.get(ME_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, {
+            'name': self.user.name,
+            'email': self.user.email
+        })
+
+    def test_post_me_is_not_allowed(self):
+        '''Test that POST is not allowed on the me URL'''
+        res = self.client.post(ME_URL, {})
+
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_update_user_profile(self):
+        '''Test updating the profile for an authenticated user'''
+        payload = {
+            'name': 'New name',
+            'password': 'New Password 123'
+        }
+        res = self.client.patch(ME_URL, payload)
+        self.user.refresh_from_db()
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.user.name, payload['name'])
+        self.user.check_password(payload['password'])
