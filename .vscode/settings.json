@@ -2,4 +2,5 @@
     "python.linting.flake8Enabled": true,
     "python.linting.flake8Args": ["--config=app/.flake8"],
     "python.linting.enabled": true,
+    "files.trimTrailingWhitespace": true,
 }
