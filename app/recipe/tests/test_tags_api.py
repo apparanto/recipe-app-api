@@ -7,7 +7,7 @@ from rest_framework.test import APIClient
 
 from core.models import Tag
 
-from recipe.serializers import RecipeTagSerializer
+from recipe.serializers import TagSerializer
 
 TAGS_URL = reverse('recipe:tag-list')
 
@@ -44,7 +44,7 @@ class PrivateTagsApiTests(TestCase):
         res = self.client.get(TAGS_URL)
 
         tags = Tag.objects.all().order_by('-name')
-        serializer = RecipeTagSerializer(tags, many=True)
+        serializer = TagSerializer(tags, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
@@ -79,7 +79,7 @@ class PrivateTagsApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertTrue(tag_exists)
 
-    def test_create_tag_invalud(self):
+    def test_create_tag_invalid(self):
         '''Test that a tag with an invalid payload is not created'''
         payload = {
             'name': ''
