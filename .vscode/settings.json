@@ -1,6 +1,9 @@
 {
     "python.linting.flake8Enabled": true,
     "python.linting.flake8Args": ["--config=app/.flake8"],
+    "python.experiments.optOutFrom": ["All"],
+    "python.pythonPath": "/Users/rjportier/.virtualenvs/recipe-app-api/bin/python",
+    "python.autoComplete.extraPaths": ["./app"],
     "python.linting.enabled": true,
     "files.trimTrailingWhitespace": true,
 }
