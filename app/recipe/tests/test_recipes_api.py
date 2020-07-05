@@ -226,7 +226,6 @@ class PrivateRecipesApiTest(TestCase):
 
         recipe.ingredients.add(ingredient1)
         recipe.tags.add(tag1)
-        price = recipe.price
         payload = {
             'title': 'Chicken pizza',
             'time_minutes': 12,
