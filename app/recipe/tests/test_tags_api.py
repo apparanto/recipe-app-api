@@ -89,3 +89,14 @@ class PrivateTagsApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         tag_count = Tag.objects.count()
         self.assertEqual(tag_count, 0)
+
+    def test_delete_tag(self):
+        tag = Tag.objects.create(user=self.user, name='Test tag')
+
+        tag_url = reverse('recipe:tag-detail', args=[tag.id])
+        res = self.client.delete(tag_url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
+        tags = Tag.objects.all()
+        self.assertEqual(tags.count(), 0)

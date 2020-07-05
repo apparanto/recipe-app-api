@@ -8,7 +8,8 @@ from recipe import serializers
 
 class BaseRecipeAttrViewSet(viewsets.GenericViewSet,
                             mixins.ListModelMixin,
-                            mixins.CreateModelMixin):
+                            mixins.CreateModelMixin,
+                            mixins.DestroyModelMixin):
     '''Base viewset for model recipe attribute class'''
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
@@ -54,3 +55,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return serializers.RecipeDetailSerializer
 
         return self.serializer_class
+
+    def perform_create(self, serializer):
+        '''Create a new recipe'''
+        serializer.save(user=self.request.user)

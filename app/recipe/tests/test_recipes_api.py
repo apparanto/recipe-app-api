@@ -127,5 +127,121 @@ class PrivateRecipesApiTest(TestCase):
         res = self.client.get(url)
 
         serializer = RecipeDetailSerializer(recipe)
-
         self.assertEqual(res.data, serializer.data)
+
+    def test_create_basic_recipe(self):
+        '''Test creating a basic recipe'''
+        payload = {
+            'title': 'Chocolate cheesecake',
+            'time_minutes': 30,
+            'price': 3.50
+        }
+        res = self.client.post(RECIPES_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        recipe = Recipe.objects.get(id=res.data['id'])
+
+        for key in payload.keys():
+            self.assertEqual(payload[key], getattr(recipe, key))
+
+    def test_create_recipe_with_tags(self):
+        '''Test creating a recipe with tags'''
+        tag1 = test_tag(user=self.user)
+        tag2 = test_tag(user=self.user)
+
+        payload = {
+            'title': 'Avocado lime cheesecake',
+            'time_minutes': 30,
+            'price': 4.00,
+            'tags': [tag1.id, tag2.id]
+        }
+
+        res = self.client.post(RECIPES_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        recipe = Recipe.objects.get(id=res.data['id'])
+        tags = recipe.tags.all()
+        self.assertEqual(tags.count(), 2)
+        self.assertIn(tag1, tags)
+        self.assertIn(tag2, tags)
+
+    def test_create_recipe_with_ingredients(self):
+        '''Test creating a recipe with ingredients'''
+        ingredient1 = test_ingredient(user=self.user)
+        ingredient2 = test_ingredient(user=self.user)
+
+        payload = {
+            'title': 'Thai prawn red curry',
+            'time_minutes': 20,
+            'price': 6.50,
+            'ingredients': [ingredient1.id, ingredient2.id]
+        }
+
+        res = self.client.post(RECIPES_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        recipe = Recipe.objects.get(id=res.data['id'])
+        ingredients = recipe.ingredients.all()
+        self.assertEqual(ingredients.count(), 2)
+        self.assertIn(ingredient1, ingredients)
+        self.assertIn(ingredient2, ingredients)
+
+    def test_update_recipe_partial(self):
+        '''Test updating a recipe with PATCH'''
+        recipe = test_recipe(user=self.user)
+
+        ingredient1 = test_ingredient(user=self.user, name="Salt")
+        ingredient2 = test_ingredient(user=self.user, name="Pepper")
+        tag1 = test_tag(user=self.user, name="Hot")
+        tag2 = test_tag(user=self.user, name="Spicy")
+
+        recipe.ingredients.add(ingredient1)
+        recipe.tags.add(tag1)
+        price = recipe.price
+        payload = {
+            'title': 'Chicken pizza',
+            'ingredients': [ingredient2.id],
+            'tags': [tag2.id]
+        }
+
+        res = self.client.patch(recipe_detail_url(recipe.id), payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        recipe.refresh_from_db()
+        ingredients = recipe.ingredients
+        self.assertEqual(ingredients.count(), 1)
+        self.assertEqual(ingredients.all()[0], ingredient2)
+        tags = recipe.tags
+        self.assertEqual(tags.count(), 1)
+        self.assertEqual(tags.all()[0], tag2)
+        self.assertEqual(recipe.price, price)
+
+    def test_update_recipe_full(self):
+        '''Test a full update to a recipe'''
+        recipe = test_recipe(user=self.user)
+
+        ingredient1 = test_ingredient(user=self.user, name="Salt")
+        ingredient2 = test_ingredient(user=self.user, name="Pepper")
+        tag1 = test_tag(user=self.user, name="Hot")
+        tag2 = test_tag(user=self.user, name="Spicy")
+
+        recipe.ingredients.add(ingredient1)
+        recipe.tags.add(tag1)
+        price = recipe.price
+        payload = {
+            'title': 'Chicken pizza',
+            'time_minutes': 12,
+            'price': 8.00,
+            'ingredients': [ingredient2.id],
+            'tags': [tag2.id]
+        }
+
+        res = self.client.put(recipe_detail_url(recipe.id), payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        recipe.refresh_from_db()
+        ingredients = recipe.ingredients
+        self.assertEqual(ingredients.count(), 1)
+        self.assertEqual(ingredients.all()[0], ingredient2)
+        tags = recipe.tags
+        self.assertEqual(tags.count(), 1)
+        self.assertEqual(tags.all()[0], tag2)
+        self.assertEqual(recipe.price, payload['price'])
