@@ -6,6 +6,16 @@ from django.contrib.auth.models import \
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
+import uuid
+import os
+
+
+def recipe_image_file_path(instance, filename):
+    '''Generate a unique file path for the recipe image'''
+    ext = filename.split('.')[-1]
+    filename = f'{uuid.uuid4()}.{ext}'
+    return os.path.join('uploads/recipe/', filename)
+
 
 def validateEmail(email):
     from django.core.validators import validate_email
@@ -88,6 +98,8 @@ class Recipe(models.Model):
 
     ingredients = models.ManyToManyField(Ingredient)
     tags = models.ManyToManyField(Tag)
+
+    image = models.ImageField(null=True, upload_to=recipe_image_file_path)
 
     def __str__(self):
         return self.title
